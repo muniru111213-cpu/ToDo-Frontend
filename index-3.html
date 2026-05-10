@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0e0e0e">
+<title>TODO</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #c8ff00;
+    --accent-dim: #8aad00;
+    --text: #f0f0f0;
+    --muted: #666;
+    --danger: #ff4444;
+    --done: #3a3a3a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 0 0 90px;
+    /* iOSのズーム防止 */
+    touch-action: manipulation;
+  }
+
+  /* HEADER */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: env(safe-area-inset-top, 16px) 20px 12px;
+    padding-top: max(env(safe-area-inset-top), 16px);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 56px;
+  }
+
+  header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 4px;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .share-btn {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 10px 18px;
+    font-size: 0.8rem;
+    font-family: 'Noto Sans JP', sans-serif;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border-radius: 4px;
+    min-height: 44px; /* タップ領域確保 */
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .share-btn:active { background: var(--accent); color: #000; }
+
+  /* SETUP PANEL */
+  #setup-panel {
+    margin: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 20px;
+  }
+
+  #setup-panel h2 {
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .field { margin-bottom: 16px; }
+
+  .field label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .field input {
+    width: 100%;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    /* iOSでズームしないよう16px以上 */
+    padding: 14px 16px;
+    font-size: 1rem;
+    font-family: 'Noto Sans JP', sans-serif;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.2s;
+    min-height: 52px;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .field input:focus { border-color: var(--accent); }
+
+  .setup-note {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 14px;
+    line-height: 1.8;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .setup-note a {
+    color: var(--accent-dim);
+    text-decoration: underline;
+  }
+
+  .btn-primary {
+    width: 100%;
+    margin-top: 20px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 16px;
+    font-size: 1rem;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 500;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border-radius: 8px;
+    min-height: 52px;
+    transition: opacity 0.2s;
+  }
+  .btn-primary:active { opacity: 0.8; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* MAIN */
+  #main { display: none; padding: 0 16px; }
+
+  /* INPUT BAR */
+  .input-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 10px 16px;
+    padding-bottom: max(env(safe-area-inset-bottom), 10px);
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+  }
+
+  .input-bar input {
+    flex: 1;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    padding: 14px 16px;
+    font-size: 1rem; /* iOSズーム防止 */
+    font-family: 'Noto Sans JP', sans-serif;
+    border-radius: 8px;
+    outline: none;
+    min-height: 52px;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color 0.2s;
+  }
+  .input-bar input:focus { border-color: var(--accent); }
+
+  .add-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    width: 52px;
+    height: 52px;
+    font-size: 1.6rem;
+    cursor: pointer;
+    border-radius: 8px;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .add-btn:active { opacity: 0.7; }
+  .add-btn:disabled { opacity: 0.4; }
+
+  /* SECTION */
+  .section-label {
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding: 20px 0 10px;
+  }
+
+  /* TODO ITEM */
+  .todo-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* チェックボックス：タップしやすく大きく */
+  .check-box {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--muted);
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 1px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    /* タップ領域を広げる */
+    position: relative;
+  }
+  .check-box::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+  }
+  .check-box:active { border-color: var(--accent); transform: scale(0.92); }
+  .check-box.checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .check-box.checked::after {
+    content: '';
+    width: 7px; height: 12px;
+    border: 2.5px solid #000;
+    border-top: none; border-left: none;
+    transform: rotate(45deg) translateY(-1px);
+  }
+
+  .todo-text {
+    flex: 1;
+    font-size: 1rem;
+    line-height: 1.5;
+    font-weight: 300;
+    word-break: break-all;
+  }
+  .todo-text.done {
+    text-decoration: line-through;
+    color: var(--muted);
+  }
+
+  .todo-meta {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* 削除ボタン：タップしやすく */
+  .delete-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1.2rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    margin-top: -6px;
+    margin-right: -8px;
+  }
+  .delete-btn:active { color: var(--danger); background: rgba(255,68,68,0.1); }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--accent);
+    color: #000;
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    padding: 12px 24px;
+    border-radius: 24px;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 200;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* STATUS */
+  #status {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .readonly-badge {
+    display: inline-block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px 20px;
+    color: var(--muted);
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+  }
+
+  .count-badge {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 2px;
+    margin-left: 4px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>TODO</h1>
+  <span id="readonly-label"></span>
+  <button class="share-btn" id="share-btn" onclick="copyShareURL()" style="display:none">SHARE</button>
+</header>
+
+<!-- SETUP PANEL -->
+<div id="setup-panel">
+  <h2>SETUP — GitHub Issues API</h2>
+  <div class="field">
+    <label>GITHUB USERNAME</label>
+    <input id="inp-owner" type="text" placeholder="your-username" autocomplete="off">
+  </div>
+  <div class="field">
+    <label>REPOSITORY NAME</label>
+    <input id="inp-repo" type="text" placeholder="my-todo" autocomplete="off">
+  </div>
+  <div class="field">
+    <label>PERSONAL ACCESS TOKEN <span style="color:#555">（自分の端末のみ・共有されません）</span></label>
+    <input id="inp-token" type="password" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off">
+  </div>
+  <p class="setup-note">
+    ① GitHubで新しい<strong style="color:#f0f0f0">プライベートリポジトリ</strong>を作成<br>
+    ② <a href="https://github.com/settings/tokens" target="_blank">Settings → Tokens (classic)</a> でトークン発行（scopeは <code>repo</code>）<br>
+    ③ トークンはこのデバイスのみに保存されます
+  </p>
+  <button class="btn-primary" id="connect-btn" onclick="connect()">接続する</button>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <p class="section-label">ACTIVE <span class="count-badge" id="active-count"></span></p>
+  <div id="active-list"></div>
+
+  <p class="section-label" id="done-label" style="display:none">DONE <span class="count-badge" id="done-count"></span></p>
+  <div id="done-list"></div>
+
+  <div id="status"></div>
+  <div class="empty-state" id="empty-state" style="display:none">タスクなし</div>
+</div>
+
+<!-- INPUT BAR -->
+<div class="input-bar" id="input-bar" style="display:none">
+  <input id="todo-input" type="text" placeholder="タスクを入力して送信…" maxlength="200"
+    enterkeyhint="send"
+    onkeydown="if(event.key==='Enter')addTodo()">
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────
+let owner = '', repo = '', token = '';
+let todos = [];
+let readOnly = false;
+
+// ─── INIT ─────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(location.search);
+  const sharedOwner = params.get('o');
+  const sharedRepo  = params.get('r');
+
+  if (sharedOwner && sharedRepo) {
+    // 共有URLで開いた場合 → 読み取り専用モード
+    readOnly = true;
+    owner = sharedOwner;
+    repo  = sharedRepo;
+    document.getElementById('setup-panel').style.display = 'none';
+    document.getElementById('readonly-label').innerHTML =
+      '<span class="readonly-badge">READ ONLY</span>';
+    startMain();
+  } else {
+    // ローカルストレージから復元
+    owner = localStorage.getItem('gh_owner') || '';
+    repo  = localStorage.getItem('gh_repo')  || '';
+    token = localStorage.getItem('gh_token') || '';
+    if (owner && repo && token) {
+      document.getElementById('setup-panel').style.display = 'none';
+      document.getElementById('share-btn').style.display = 'block';
+      startMain();
+    } else {
+      document.getElementById('inp-owner').value = owner;
+      document.getElementById('inp-repo').value  = repo;
+    }
+  }
+});
+
+// ─── CONNECT ──────────────────────────────────────────
+async function connect() {
+  owner = document.getElementById('inp-owner').value.trim();
+  repo  = document.getElementById('inp-repo').value.trim();
+  token = document.getElementById('inp-token').value.trim();
+
+  if (!owner || !repo || !token) { toast('すべての項目を入力してください'); return; }
+
+  const btn = document.getElementById('connect-btn');
+  btn.disabled = true; btn.textContent = '接続中...';
+
+  // 接続テスト
+  const r = await ghFetch(`https://api.github.com/repos/${owner}/${repo}`, 'GET');
+  if (!r.ok) {
+    toast('接続失敗。情報を確認してください');
+    btn.disabled = false; btn.textContent = '接続する';
+    return;
+  }
+
+  localStorage.setItem('gh_owner', owner);
+  localStorage.setItem('gh_repo', repo);
+  localStorage.setItem('gh_token', token);
+
+  document.getElementById('setup-panel').style.display = 'none';
+  document.getElementById('share-btn').style.display = 'block';
+  startMain();
+}
+
+// ─── MAIN START ───────────────────────────────────────
+function startMain() {
+  document.getElementById('main').style.display = 'block';
+  if (!readOnly) document.getElementById('input-bar').style.display = 'flex';
+  loadTodos();
+}
+
+// ─── LOAD TODOS ───────────────────────────────────────
+async function loadTodos() {
+  setStatus('<span class="spinner"></span> 読み込み中...');
+
+  const url = `https://api.github.com/repos/${owner}/${repo}/issues?state=all&labels=todo&per_page=100`;
+  const r = await ghFetch(url, 'GET');
+  if (!r.ok) { setStatus('読み込みエラー'); return; }
+
+  const issues = await r.json();
+  todos = issues.map(i => ({
+    id:     i.number,
+    title:  i.title,
+    done:   i.state === 'closed',
+    date:   i.created_at
+  }));
+
+  setStatus('');
+  render();
+}
+
+// ─── RENDER ───────────────────────────────────────────
+function render() {
+  const active = todos.filter(t => !t.done);
+  const done   = todos.filter(t => t.done);
+
+  document.getElementById('active-count').textContent = active.length || '';
+  document.getElementById('active-list').innerHTML = active.map(itemHTML).join('');
+
+  if (done.length > 0) {
+    document.getElementById('done-label').style.display = 'block';
+    document.getElementById('done-count').textContent = done.length;
+    document.getElementById('done-list').innerHTML = done.map(itemHTML).join('');
+  } else {
+    document.getElementById('done-label').style.display = 'none';
+    document.getElementById('done-list').innerHTML = '';
+  }
+
+  document.getElementById('empty-state').style.display =
+    (todos.length === 0) ? 'block' : 'none';
+}
+
+function itemHTML(t) {
+  const date = new Date(t.date).toLocaleDateString('ja-JP', {month:'numeric',day:'numeric'});
+  const deleteBtn = readOnly ? '' :
+    `<button class="delete-btn" onclick="deleteTodo(${t.id})" title="削除">×</button>`;
+  const checkClick = readOnly ? '' : `onclick="toggleTodo(${t.id},${t.done})"`;
+
+  return `
+  <div class="todo-item" id="item-${t.id}">
+    <div class="check-box ${t.done ? 'checked' : ''}" ${checkClick}></div>
+    <div style="flex:1">
+      <div class="todo-text ${t.done ? 'done' : ''}">${escHtml(t.title)}</div>
+      <div class="todo-meta">#${t.id} · ${date}</div>
+    </div>
+    ${deleteBtn}
+  </div>`;
+}
+
+// ─── ADD ──────────────────────────────────────────────
+async function addTodo() {
+  const inp = document.getElementById('todo-input');
+  const title = inp.value.trim();
+  if (!title) return;
+
+  inp.disabled = true;
+
+  const r = await ghFetch(
+    `https://api.github.com/repos/${owner}/${repo}/issues`,
+    'POST',
+    { title, labels: ['todo'] }
+  );
+
+  if (r.ok) {
+    const issue = await r.json();
+    todos.unshift({ id: issue.number, title: issue.title, done: false, date: issue.created_at });
+    inp.value = '';
+    render();
+    toast('追加しました');
+  } else {
+    toast('追加に失敗しました');
+  }
+  inp.disabled = false;
+  inp.focus();
+}
+
+// ─── TOGGLE ───────────────────────────────────────────
+async function toggleTodo(id, isDone) {
+  const newState = isDone ? 'open' : 'closed';
+  const r = await ghFetch(
+    `https://api.github.com/repos/${owner}/${repo}/issues/${id}`,
+    'PATCH',
+    { state: newState }
+  );
+  if (r.ok) {
+    const t = todos.find(x => x.id === id);
+    if (t) t.done = !isDone;
+    render();
+  } else {
+    toast('更新に失敗しました');
+  }
+}
+
+// ─── DELETE ───────────────────────────────────────────
+async function deleteTodo(id) {
+  // GitHub API はIssueを完全削除できないのでラベル削除＋closeで対応
+  await ghFetch(
+    `https://api.github.com/repos/${owner}/${repo}/issues/${id}/labels/todo`,
+    'DELETE'
+  );
+  await ghFetch(
+    `https://api.github.com/repos/${owner}/${repo}/issues/${id}`,
+    'PATCH',
+    { state: 'closed' }
+  );
+  todos = todos.filter(t => t.id !== id);
+  render();
+  toast('削除しました');
+}
+
+// ─── SHARE ────────────────────────────────────────────
+function copyShareURL() {
+  const url = `${location.origin}${location.pathname}?o=${encodeURIComponent(owner)}&r=${encodeURIComponent(repo)}`;
+  navigator.clipboard.writeText(url).then(() => toast('URLをコピーしました'));
+}
+
+// ─── HELPERS ──────────────────────────────────────────
+async function ghFetch(url, method, body) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return fetch(url, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined
+  });
+}
+
+function setStatus(html) {
+  document.getElementById('status').innerHTML = html;
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
